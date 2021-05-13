@@ -1,0 +1,18 @@
+[client]
+${client}
+
+[hdfs_master]
+${hdfs_master}
+
+[mr_master]
+${mr_master}
+
+[hdfs_slave]
+%{ for ip in hdfs_slave ~}
+${ip}
+%{ endfor ~}
+
+[mr_slave]
+%{for ip in mr_slave ~}
+${ip}
+%{ endfor ~}

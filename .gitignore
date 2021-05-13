@@ -1,0 +1,14 @@
+*.rpm
+.terraform/providers/registry.terraform.io/hashicorp/aws/3.39.0/linux_amd64/terraform-provider-aws_v3.39.0_x5
+h1.yml
+h2.yml
+h3.yml
+h4.yml
+h5.yml
+h6.yml
+terraform.tfstate
+terraform.tfstate.backup
+jdk-8u171-linux-x64.rpm
+hadoop-1.2.1-1.x86_64.rpm
+.terraform.lock.hcl
+.terraform

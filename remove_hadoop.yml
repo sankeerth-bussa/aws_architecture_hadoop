@@ -1,0 +1,78 @@
+- name: configuring hadoop cluster
+  hosts: all
+  tasks:
+          - name: removing hadoop setup file
+            file:
+                  path: /root/hadoop-1.2.1-1.x86_64.rpm
+                  state: absent
+
+          - name: removing jkd setup file
+            file:
+                  path: /root/jdk-8u171-linux-x64.rpm
+                  state: absent
+
+          - name: checking jdk
+            shell: "rpm -q jdk1.8"
+            register: j
+            ignore_errors: true
+
+          - name: uninstalling jdk
+            shell: "yum remove jdk-8u171-linux-x64.rpm -y"
+            when: j.rc == 0
+
+          - name: checking hadoop
+            shell: "rpm -q hadoop"
+            register: h
+            ignore_errors: true
+
+          - name: uninstalling hadoop
+            shell: "rpm -e hadoop"
+            when: h.rc == 0
+
+- name: namenode configuration
+  hosts: master
+  tasks:
+          - name: removing hdfs-site.xml
+            file:
+                  path: /etc/hadoop/hdfs-site.xml
+                  state: absent
+
+          - name: removing core-site.xml
+            file:
+                  dest: /etc/hadoop/core-site.xml
+                  state: absent
+
+          - name: removing /nn directory
+            file:
+                  path: /nn
+                  state: absent
+
+          - name: start firewall
+            service:
+                  name: firewalld
+                  state: started
+
+          - name: checking namenode status
+            command: "ls /nn/image"
+            register: nn
+            ignore_errors: true
+
+          
+- name: datanode configuration
+  hosts: slave
+  tasks:
+          - name: removing hdfs-site.xml
+            file:
+                  path: /etc/hadoop/hdfs-site.xml
+                  state: absent
+
+          - name: removing core-site.xml
+            file:
+                  path: /etc/hadoop/core-site.xml
+                  state: absent
+
+          - name: removing /dn directory
+            file:
+                  path: /dn
+                  state: absent
+
