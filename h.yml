@@ -1,0 +1,163 @@
+- name: configuring hadoop cluster
+  hosts: all
+  gather_facts: no
+  tasks:
+          - name: installing python
+            yum:
+                    name: python3
+                    state: present
+
+          - name: installing gdown
+            pip:
+                    name: gdown
+                    executable: pip3.6
+
+          - name: copying script for downloading hadoop and jdk
+            copy:
+                    src: download.sh   
+                    dest: /home/ec2-user/ 
+
+          - name: making file executable
+            ansible.builtin.file:
+                    path: /home/ec2-user/download.sh 
+                    state: file
+                    mode:  0775 
+
+          - name: running script to download
+            shell: /home/ec2-user/download.sh   
+
+          - name: checking jdk
+            shell: rpm -q jdk1.8 
+            register: j
+            ignore_errors: true
+
+          - name: installing jdk
+            shell: rpm -i /home/ec2-user/jdk-8u171-linux-x64.rpm
+            when: j.rc != 0
+
+          - name: checking hadoop
+            shell: rpm -q hadoop
+            register: h
+            ignore_errors: true
+
+          - name: installing hadoop
+            shell: rpm -i /home/ec2-user/hadoop-1.2.1-1.x86_64.rpm --force
+            when: h.rc != 0
+
+          
+- name: namenode configuration
+  hosts: hdfs_master
+  gather_facts: no
+  tasks:
+          - name: copying hdfs-site.xml
+            become: yes
+            copy:
+                  src: nhdfs-site.xml
+                  dest: /etc/hadoop/hdfs-site.xml 
+
+          - name: copying ncore-site.xml
+            become: yes
+            template:
+                  src: ncore-site.xml
+                  dest: /etc/hadoop/core-site.xml 
+
+          - name: remove /nn directory
+            become: yes
+            file:
+                  path: /nn
+                  state: absent
+
+          - name: creating /nn directory
+            become: yes
+            file:
+                  path: /nn
+                  state: directory
+
+
+          - name: checking namenode status
+            command: ls /nn/image
+            register: nn
+            ignore_errors: true
+
+          - name: formatting namenode
+            shell: echo Y | sudo hadoop namenode -format
+            when: nn.rc != 0
+            ignore_errors: true
+
+          - name: starting namenode
+            shell: hadoop-daemon.sh start namenode
+            ignore_errors: true
+
+          
+- name: datanode configuration
+  hosts: hdfs_slave
+  gather_facts: no
+  tasks:
+          - name: copying hdfs-site.xml
+            copy:
+                  src: dhdfs-site.xml  
+                  dest: /etc/hadoop/hdfs-site.xml
+
+          - name: copying core-site.xml
+            template:
+                  src: dcore-site.xml
+                  dest: /etc/hadoop/core-site.xml
+
+          - name: creating /dn directory
+            file:
+                  path: /dn
+                  state: directory
+
+          - name: starting datanode
+            shell: hadoop-daemon.sh start datanode
+            ignore_errors: true
+
+          
+- name: job tracker configuration
+  hosts: mr_master
+  gather_facts: no
+  tasks:
+          - name: copying mapred-site.xml
+            template:
+                  src: jmapred-site.xml
+                  dest: /etc/hadoop/mapred-site.xml
+
+          - name: copyging core-site.xml
+            template:
+                  src: dcore-site.xml
+                  dest: /etc/hadoop/core-site.xml
+
+          - name: starting job tracker
+            shell: hadoop-daemon.sh start jobtracker
+            ignore_errors: true
+
+          
+- name: task tracker configuration
+  hosts: mr_slave
+  gather_facts: no
+  tasks:
+          - name: copyging mapred-site.xml
+            template:
+                  src: tmapred-site.xml
+                  dest: /etc/hadoop/mapred-site.xml
+
+          - name: starting task tracker
+            shell: hadoop-daemon.sh start tasktracker
+            ignore_errors: true
+
+          
+- name: client configuration
+  hosts: client
+  gather_facts: no
+  tasks:
+          - name: copyging core-site.xml
+            template:
+                  src: dcore-site.xml
+                  dest: /etc/hadoop/core-site.xml
+
+          - name: copying mapred-site.xml
+            template:
+                  src: tmapred-site.xml
+                  dest: /etc/hadoop/mapred-site.xml
+
+
