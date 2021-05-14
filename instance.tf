@@ -28,7 +28,7 @@ variable "os" {
 
 resource "aws_instance" "hdfs_slave"{
 	provider = aws.nobel
-	count = 3
+	count = 1
 	ami = var.os
 	instance_type = "t2.micro"
 	key_name = var.key
@@ -40,7 +40,7 @@ resource "aws_instance" "hdfs_slave"{
 
 resource "aws_instance" "mr_slave"{
         provider = aws.kumar
-        count = 3
+        count = 1
         ami = var.os
 	instance_type = "t2.micro"
         key_name = var.key
