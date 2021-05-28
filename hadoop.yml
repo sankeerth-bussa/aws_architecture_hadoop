@@ -159,5 +159,3 @@
             template:
                   src: tmapred-site.xml
                   dest: /etc/hadoop/mapred-site.xml
-
-

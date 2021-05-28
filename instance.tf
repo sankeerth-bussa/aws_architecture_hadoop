@@ -1,42 +1,9 @@
-# Using 3 different AWS accounts this can be even done with 1 AWS account
-provider "aws" {
-	alias = "sankeerth"
-	region = "us-east-1"
-	profile = "sankeerth"
-}
-
-provider "aws" {
-        alias = "kumar"
-        region = "us-east-1"
-        profile = "kumar"
-}
-
-provider "aws" {
-        alias = "nobel"
-        region = "us-east-1"
-        profile = "nobel"
-}
-
-
-#This variable is the ssh key pair name
-variable "key" {
-	type = string
-	default = "vm_key"
-}
-
-#This variable is the AWS ami
-variable "os" {
-	type = string
-	default = "ami-096fda3c22c1c990a"
-}
-
-
 #This instance resource will launch the required instances with hdfs_slave tags
 resource "aws_instance" "hdfs_slave"{
 	provider = aws.nobel
-	count = 3
+	count = 1
 	ami = var.os
-	instance_type = "t2.micro"
+	instance_type = var.instance_type
 	key_name = var.key
 	security_groups = [ "launch-wizard-1" ]
 	tags = {
@@ -45,18 +12,17 @@ resource "aws_instance" "hdfs_slave"{
 	}
 }
 
-
 #This instance resource wil launch the required instances with mr_slave tags
 resource "aws_instance" "mr_slave"{
         provider = aws.kumar
-        count = 3
+        count = 1
         ami = var.os
-	instance_type = "t2.micro"
+		instance_type = var.instance_type
         key_name = var.key
-        security_groups = [ "launch-wizard-1" ]
+        security_groups = [ var.security_group ]
         tags = {
-		Name = "MR_SLAVE"
-                role = "mr_slave"
+			Name = "MR_SLAVE"
+        	role = "mr_slave"
         }
 }
 
@@ -64,12 +30,12 @@ resource "aws_instance" "mr_slave"{
 resource "aws_instance" "s1"{
         provider = aws.sankeerth
         ami = var.os
-	instance_type = "t2.micro"
+		instance_type = var.instance_type
         key_name = var.key
-        security_groups = [ "launch-wizard-1" ]
+        security_groups = [ var.security_group ]
         tags = {
-		Name = "HDFS_MASTER"
-                role = "hdfs_master"
+			Name = "HDFS_MASTER"
+        	role = "hdfs_master"
         }
 }
 
@@ -77,12 +43,12 @@ resource "aws_instance" "s1"{
 resource "aws_instance" "s2"{
         provider = aws.sankeerth
         ami = var.os
-	instance_type = "t2.micro"
+		instance_type = var.instance_type
         key_name = var.key
-        security_groups = [ "launch-wizard-1" ]
+        security_groups = [ var.security_group ]
         tags = {
-		Name = "MR_MASTER"
-                role = "mr_master"
+			Name = "MR_MASTER"
+    	    role = "mr_master"
         }
 }
 
@@ -90,12 +56,12 @@ resource "aws_instance" "s2"{
 resource "aws_instance" "s3"{
         provider = aws.sankeerth
         ami = var.os
-	instance_type = "t2.micro"
+		instance_type = var.instance_type
         key_name = var.key
-        security_groups = [ "launch-wizard-1" ]
+        security_groups = [ var.security_group ]
         tags = {
-		Name = "Client"
-                role = "client"
+			Name = "Client"
+            role = "client"
         }
 }
 
@@ -114,9 +80,8 @@ resource "local_file" "AnsibleInventory" {
 
 #This is null resource which will perform a local execution to run the ansible playbook
 resource "null_resource" "play"{
-	provisioner "local-exec" {
-	command = "ansible-playbook hadoop.yml"
-	}
 	depends_on = ["local_file.AnsibleInventory"]
+	provisioner "local-exec" {
+		command = "ansible-playbook hadoop.yml"
+	}
 }
-
